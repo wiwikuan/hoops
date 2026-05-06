@@ -14,17 +14,17 @@ const DEFAULT_CONFIG = {
   MAX_DRIFT_T: 0.35,
   GRAVITY_RATIO: 5,   
   BALL_RADIUS_RATIO: 0.03,
-  RESTITUTION_RIM: 0.75,
-  RESTITUTION_BOARD: 0.75,
+  RESTITUTION_RIM: 0.65,
+  RESTITUTION_BOARD: 0.7,
   RESTITUTION_BALL: 0.7,
   AIR_DRAG: 0,
   SHOT_TARGET_TIME: 0.75,
   SHOT_DRIFT_VEL: 0.4,
   SHOT_DRIFT_ANGLE: 0.6,
   BALL_IMG_SRC: null,
-  PERFECT_JITTER_VEL: 0.002,    // perfect 時速度的隨機浮動範圍（±1.5%）
-  PERFECT_JITTER_ANGLE: 0.0015,  // perfect 時角度的隨機浮動（±0.012 弧度，約 0.7 度）
-  EULER_COMPENSATION: 0.011,  // semi-implicit Euler 的初幀重力補償（秒）。偏短就調大、偏長就調小。
+  PERFECT_JITTER_VEL: 0.0025,    // perfect 時速度的隨機浮動範圍（±1.5%）
+  PERFECT_JITTER_ANGLE: 0.003,  // perfect 時角度的隨機浮動（±0.012 弧度，約 0.7 度）
+  EULER_COMPENSATION: 0.012,  // semi-implicit Euler 的初幀重力補償（秒）。偏短就調大、偏長就調小。
 };
 
 const COLORS = {
@@ -426,10 +426,9 @@ function initGame(canvas, userConfig) {
     const g = geom();
     const tNorm = Math.min(1, holdT / CONFIG.JUMP_DURATION);
     const offset = tNorm - CONFIG.PERFECT_WINDOW_T;
+    // const offset = -0.008; // 測試用
     const absOff = Math.abs(offset);
 
-	// console.log 顯示投籃資訊
-    console.log(`[shot] 按了 ${(tNorm * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms / 完美時機 ${(CONFIG.PERFECT_WINDOW_T * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms ${absOff < CONFIG.PERFECT_TOLERANCE ? '✨ PERFECT' : offset < 0 ? `⏪ 太早 ${Math.abs(offset * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms` : `⏩ 太晚 ${(offset * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms`}`);
 
     const jumpY = jumpOffset(tNorm) * (W * CONFIG.JUMP_HEIGHT_RATIO);
     const bx = g.ballX;
@@ -456,10 +455,18 @@ function initGame(canvas, userConfig) {
     const baseJitter = (Math.random() - 0.5) * 2; // -1 ~ 1
     const baseJitter2 = (Math.random() - 0.5) * 2;
 
-    // drift — 釋放時機不準時的額外偏移
-    const driftSpeed = (sign * driftMag * CONFIG.SHOT_DRIFT_VEL) + rand * 0.05 * driftMag;
-    const driftAngle = (sign * driftMag * CONFIG.SHOT_DRIFT_ANGLE) + rand * 0.15 * driftMag;
+	// 曲線的 driftMag
+    const driftMagCurved = driftMag ** 0.4;
 
+    // drift — 釋放時機不準時的額外偏移
+    const driftSpeed = (sign * driftMag * CONFIG.SHOT_DRIFT_VEL) + rand * 1 * (driftMag ** 3);
+    const driftAngle = (sign * driftMag * CONFIG.SHOT_DRIFT_ANGLE) + rand * 0.4 * driftMagCurved;
+    
+	// console.log(driftMag, driftSpeed, driftAngle);
+	
+	// console.log 顯示投籃資訊
+    console.log(`[shot] 按了 ${(tNorm * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms ${absOff < CONFIG.PERFECT_TOLERANCE ? '✨ PERFECT' : offset < 0 ? `⏪ 太早 ${Math.abs(offset * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms` : `⏩ 太晚 ${(offset * CONFIG.JUMP_DURATION * 1000).toFixed(0)}ms`} | 偏移力度 ${(driftSpeed + baseJitter * CONFIG.PERFECT_JITTER_VEL).toFixed(4)} 偏移角度 ${(driftAngle + baseJitter2 * CONFIG.PERFECT_JITTER_ANGLE).toFixed(4)}`);
+    
     const newSpeed = speed
       * (1 + baseJitter * CONFIG.PERFECT_JITTER_VEL)
       * (1 + driftSpeed);
