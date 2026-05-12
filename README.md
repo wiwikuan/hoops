@@ -1,6 +1,6 @@
 # 🏀 Hoops
 
-一個可以直接嵌入 Docusaurus 部落格文章的瀏覽器投籃小遊戲。純 Canvas 繪製，不依賴任何遊戲引擎，音效也是用 Web Audio API 即時合成的。
+一個可以直接嵌入 Docusaurus 部落格文章的瀏覽器投籃小遊戲。
 
 馬上玩：https://wiwi.blog/blog/hoops
 
